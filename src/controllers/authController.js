@@ -52,10 +52,25 @@ async function login(req, res) {
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) return send(res, 401, false, 'Invalid email or password');
 
-    const match = await user.comparePassword(password);
+    // Check if password comparison works correctly
+    let match;
+    try {
+      match = await user.comparePassword(password);
+    } catch (compareErr) {
+      console.error('Password comparison error:', compareErr);
+      return send(res, 500, false, 'Authentication error');
+    }
+    
     if (!match) return send(res, 401, false, 'Invalid email or password');
 
-    const token = user.generateJWT();
+    let token;
+    try {
+      token = user.generateJWT();
+    } catch (tokenErr) {
+      console.error('Token generation error:', tokenErr);
+      return send(res, 500, false, 'Authentication token error');
+    }
+    
     const safeUser = user.toJSON();
 
     return send(res, 200, true, 'Login successful', { token, user: safeUser });

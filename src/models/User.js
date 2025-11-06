@@ -25,15 +25,25 @@ userSchema.pre('save', async function (next) {
 });
 
 // Compare candidate password with stored hash
-userSchema.methods.comparePassword = function (candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (err) {
+    console.error('Bcrypt comparison error:', err);
+    throw new Error('Password comparison failed');
+  }
 };
 
 // Generate JWT for the user
 userSchema.methods.generateJWT = function () {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) throw new Error('JWT_SECRET is not defined');
-  return jwt.sign({ id: this._id }, secret, { expiresIn: '7d' });
+  try {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) throw new Error('JWT_SECRET is not defined');
+    return jwt.sign({ id: this._id }, secret, { expiresIn: '7d' });
+  } catch (err) {
+    console.error('JWT generation error:', err);
+    throw new Error('Token generation failed');
+  }
 };
 
 // Remove password from JSON responses
